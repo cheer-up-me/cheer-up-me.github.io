@@ -1,0 +1,2290 @@
+{include file="../header.htm" title="预备货计划"}
+<link rel="stylesheet" href="http://misc.erp.valsun.cn/css/imglib.css" type="text/css">
+<link rel="stylesheet" href="./public/css/jquery.multiselect.css" />
+<link rel="stylesheet" href="./public/css/jquery.multiselect.filter.css" />
+<style type="text/css">
+    .well-lg .row{
+        margin:10px 0px;
+    }
+    .SumoSelect > .optWrapper.multiple > .options > .select-all{
+        line-height: 36px;
+        height:36px;
+    }
+</style>
+<div class="well well-lg" style="clear:both;margin-top:10px;margin-bottom:10px">
+    <div class="row">
+        <div class="col-md-2">
+            <input id="searWord" type="text" value="{$smarty.get.searWord}" placeholder="搜索SKU/SPU/SPU_颜色" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <input id="searPreOrderNum" type="text" value="{$smarty.get.searPreOrderNum}" placeholder="搜索预备货单号" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <select id="searLockStatus" class="form-control">
+                <option value='-1' {if $smarty.get.searLockStatus == '-1' || empty($smarty.get.searLockStatus) } selected{/if}>选择锁定状态</option>
+                {foreach $lockArr AS $lockId => $lockName}
+                    <option value='{$lockId}'   {if $smarty.get.searLockStatus === strval($lockId) } selected{/if}>{$lockName}</option>
+                {/foreach}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select id="searStatus" class="form-control">
+                <option value='-1' {if $smarty.get.searStatus == '-1' } selected{/if}>选择状态</option>
+                {foreach $stuArr AS $stuId => $stuName}
+                    <option value='{$stuId}'   {if $smarty.get.searStatus === strval($stuId) } selected{/if}>{$stuName}</option>
+                {/foreach}
+            </select> 
+        </div>
+        <div class="col-md-2">
+            <select id="searfinish" class="form-control">
+                <option value='-1' {if $smarty.get.searLockStatus == '-1' || empty($smarty.get.searLockStatus) } selected{/if}>选择完结状态</option>
+                {foreach $finishArr AS $finishId => $finishName}
+                    <option value='{$finishId}'   {if $smarty.get.searfinish === strval($finishId) } selected{/if}>{$finishName}</option>
+                {/foreach}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select id="searSurcount" class="form-control">
+                <option value='-1' {if $smarty.get.searSurcount == '-1' || $smarty.get.searSurcount == '' } selected{/if}>是否存在总结余</option>
+                <option value='0'   {if $smarty.get.searSurcount === strval(0) } selected{/if}>否</option>
+                <option value='1'   {if $smarty.get.searSurcount === strval(1) } selected{/if}>是</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3" style="position: relative;" id="purSelect">
+            <!-- <select id="cguserId" class="form-control flexselect">
+                <option value="" selected>请选择跟单</option>
+                {foreach item=list from=$purchaseList}
+                <option value="{$list['global_user_id']}" {if $smarty.get.searCguserId == $list['global_user_id']} selected="selected"{/if}>{$list["global_user_name"]}</option>
+                {/foreach}
+            </select> -->
+            <select multiple="multiple" placeholder="请选择跟单" class="purSlectBox" id="cguserId" required style="height: 30px;width: 210px;">
+                <!-- <option value="-1">请选择跟单</option> -->
+                {foreach $purArrSelect AS $purId => $purName }
+                <option value="{$purId}" {if in_array($purId,$purIdArr)} selected{/if}>{$purName}</option>
+                {/foreach}
+            </select>
+        </div>
+        <div class="col-md-3" style="position: relative;" id="deptmentSelect">
+            <span>部门:</span>
+            <select multiple="multiple" placeholder="选择部门" class="deptSlectBox" id="deptId" required style="height: 30px;width: 210px;">
+                <!-- <option value="-1">请选择部门</option> -->
+                {foreach $deptArrSelect AS $deptId => $deptName }
+                <option value="{$deptId}" {if in_array($deptId,$deptIdArr)} selected{/if}>{$deptName}</option>
+                {/foreach}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input id="searAddUser" type="text" value="{$smarty.get.searAddUser}" placeholder="导入人" class="form-control"/>
+        </div>
+        <div class="col-md-2">
+            <input id="searLockUser" type="text" value="{$smarty.get.searLockUser}" placeholder="锁定人" class="form-control"/>
+        </div>
+        <div class="col-md-2">
+            <input id="searSaleUser" type="text" value="{$smarty.get.searSaleUser}" placeholder="销售" class="form-control"/>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <span>锁定时间: </span>
+            <input id="locktime_start" style="border:none;height: 36px;text-align: center;width: 150px;"  placeholder="开始时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="{$smarty.get.searLocktimeStart}" />-<input id="locktime_end" style="border:none;height: 36px;text-align: center;width: 150px;" placeholder="结束时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="{$smarty.get.searLocktimeEnd}" />
+        </div>
+        <div class="col-md-4">
+            <span>预计下单时间: </span>
+            <input id="pretime_start" style="border:none;height: 36px;text-align: center;width: 150px;"  placeholder="开始时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="{$smarty.get.searPretimeStart}" />-<input id="pretime_end" style="border:none;height: 36px;text-align: center;width: 150px;" placeholder="结束时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="{$smarty.get.searPretimeEnd}" />
+        </div>
+        <div class="col-md-4">
+            <span>预计回货时间: </span>
+            <input id="preArrtime_start" style="border:none;height: 36px;text-align: center;width: 150px;"  placeholder="开始时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="{$smarty.get.searPreArrtimeStart}" />-<input id="preArrtime_end" style="border:none;height: 36px;text-align: center;width: 150px;" placeholder="结束时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="{$smarty.get.searPreArrtimeEnd}" />
+        </div>
+    </div>
+    <div class="row">
+        {if $searchSupplier == 1} 
+        <div class="col-md-4 input_partner_perfectInfor0-search">
+            <!-- <span>供应商: </span> -->
+            <input type="text" oldVal="" value="" id="input_partner_perfectInfor0" class="csearch form-control" placeholder="请输入供应商"/>
+            <div style="position: relative;height: 0px;scroll-y:yes;">
+                <input type="hidden" id="input_partner_perfectInfor0-values" value="搜索值" />
+            </div> 
+        </div>
+        {/if}
+    </div>
+    <div class="row">
+        <div class="col-md-2 pull-left">
+            <button type="button" class="btn btn-primary" id="search-btn">搜索</button>
+            <button type="button" id="reSet" class="btn btn-primary">重置</button>
+        </div>
+    </div>
+</div>
+<div class="main products-main reply-main warning-main pagemargin-main">
+   <div class="even-index" style="margin-left:10px">
+        {if $importPower == 1}   
+            <button type="button" id="importRecord" class="Sea_Green" style="margin: 5px 0px;">导入需求</button>
+        {/if}
+        {if $exportSalePre == 1}
+            <button type="button" id="exportSalePre" class="Sea_Green" style="margin: 5px 0px;">销售数据导出</button>
+        {/if}
+        {if $exportPurPre == 1}
+            <button type="button" id="exportPurPre" class="Sea_Green" style="margin: 5px 0px;">跟单数据导出</button>
+        {/if}
+        {if $editPrepare == 1}
+            <button type="button" id="editPrepare" class="Sea_Green" style="margin: 5px 0px;">编辑备货记录</button>
+        {/if}
+        {if $lockPrepare == 1}  
+            <button type="button" id="lockPrepare" class="Sea_Green" style="margin: 5px 0px;">锁定记录</button>
+        {/if}
+        {if $delPrepare == 1}  
+            <button type="button" id="delPrepare" class="Sea_Green" style="margin: 5px 0px;">删除记录</button>
+        {/if}
+        {if $sharePrepare == 1}
+            <button type="button" id="sharePrepare" class="Sea_Green" style="margin: 5px 0px;">分摊记录</button>
+        {/if}
+        {if $batchSharePreData == 1}
+            <button type="button" id="batchSharePrepare" class="Sea_Green" style="margin: 5px 0px;">批量分摊记录</button>
+        {/if}
+        {if $createPreOrder == 1}
+            <button type="button" id="createPreOrder" class="Sea_Green" style="margin: 5px 0px;">生成预备货单</button>
+        {/if}
+        {if $batchEditforcastArrTime == 1}
+            <button type="button" id="batchEditforcastArrTime" class="Sea_Green" style="margin: 5px 0px;">批量更改备货进度</button>
+        {/if}
+        {if $batchAddOrdersn == 1}
+            <button type="button" id="batchOrderData" class="Sea_Green" style="margin: 5px 0px;">批量录入单号</button>
+        {/if}
+        {if $finishPrepareOrder == 1}
+            <button type="button" id="finishPrepareOrder" class="Sea_Green" style="margin: 5px 0px;">完结记录</button>
+        {/if}
+        {if $unLockPrepare == 1}  
+            <button type="button" id="unLockPrepare" class="Sea_Green" style="margin: 5px 0px;">废弃记录</button>
+        {/if}
+        {if $batchEditSupplierPur == 1}
+            <button type="button" id="batchEditSupplierPur" class="Sea_Green" style="margin: 5px 0px;">批量更改跟单和供应商</button>
+        {/if}
+        {if $batchEditSpotCount == 1}
+            <button type="button" id="batchEditSpotCount" class="Sea_Green" style="margin: 5px 0px;">维护现货数量</button>
+        {/if}
+        {if $revokePreOrder == 1}
+            <button type="button" id="revokePreOrder" class="Sea_Green" style="margin: 5px 0px;">撤销预备货单</button>
+        {/if}
+        {if $isPur == 1}
+            <button type="button" id="pushKirin" class="Sea_Green" style="margin: 5px 0px;">推送达尔文</button>
+        {/if}
+   	</div>
+    <input type="hidden" name="webUrl" id="webUrl" value="{$webUrl}" >
+	<div class="bottomvar">
+	    <div class="pagination">{$pageStr}</div> 
+	</div>
+    <table class="table table-bordered table-hover table-striped tablesorter" float="yes">
+        <thead>
+        <tr class="purchase-title title">
+            <td style="width:8px;text-align:left;"><input type="checkbox" id="inverse-check">锁定/<br/>废弃/<br/>删除</td>
+            <td>添加时间</td>
+            <td>锁定时间/废弃时间</td> 
+            <td>锁定状态</td>
+            <td>锁定人</td>
+            <td>SPU</td>
+            <td>SKU</td>
+            <td>单价(取产品中心)</td>
+            <td>需求货数量</td>
+            <td>预计下单时间</td>
+            <td>需求部门</td>
+            <td>销售</td>
+            <td>备注</td>
+            <td>站点</td>
+            <td>导入人</td>
+            <td>跟单</td>
+            <td>供应商</td>
+            <td><input type="checkbox" id="inverse-check-detail"><br/>生成预备货单/<br/>分摊选择</td>
+            <td>分摊备货数量</td>
+            <td>预备货单号</td>
+            <td>实际备货数量</td>
+            <td>现货数量</td>
+            <td>处理状态</td>
+            <td>处理时间</td>
+            <td>预计回货时间</td>
+            <td>生产进度</td>
+            <td>实际下单时间</td>
+            <td>实际下单数量</td>
+            <td>订单号</td>
+            <td>备货结余数量</td>
+            <td>总结余数量</td>
+            <td>下单延迟天数</td>
+            <td>备货单状态</td>
+            <td>预备货日志</td>
+        </tr>
+        </thead>
+        <tbody>
+           {if !empty($lists)}
+           {$tempId = ''}
+           {foreach item=list key=key from=$lists name=foo}
+           		<tr>
+                    {if $tempId != $list.shareId}
+           			<td rowspan="{$ridArr[$list.shareId]}">
+                        <input type="checkbox" name="inverse" value="{$list.rid}"  data-sku="{$list.sku}"  data-status="{$list.status}" data-count="{$list.totalCount}" data-shareId="{$list.shareId}"> 
+                    </td>
+                    <!-- 导入时间 -->
+           			<td rowspan="{$ridArr[$list.shareId]}">
+                        {if $list.addtime != 0}
+                            {$list.addtime|date_format:'%Y-%m-%d'}<br/>
+                            {$list.addtime|date_format:'%H:%M:%S'}
+                        {/if}
+                    </td>
+                    <!-- 锁定时间 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                        {if $list.locktime != 0}
+                            {$list.locktime|date_format:'%Y-%m-%d'}<br/>
+                            {$list.locktime|date_format:'%H:%M:%S'}
+                        {/if}
+                    </td>
+                    <!-- 锁定状态 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                    	{$lockArr[$list.lockStatus]}
+                    </td>
+                    <!-- 锁定人 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                        {if $list.lockuser == 10015}
+                            系统
+                        {else}
+                            {getUserNameById($list.lockuser)}
+                        {/if}
+                    </td>
+                    <!-- spu -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                        {$list.spu}
+                    </td>
+                    <!-- sku -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                    	{$list.sku}
+                    </td>
+                    <!-- sku单价(取产品中心) -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                        {$list.cost}
+                    </td>
+                    <!-- 需求总数 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                    	{$list.totalCount}
+                    </td>
+                    <!-- 预计下单时间 -->
+                   	<td rowspan="{$ridArr[$list.shareId]}">
+                        {if $list.forcastTime != 0}
+                            {$list.forcastTime|date_format:'%Y-%m-%d'}<br/>
+                        {/if}
+                    </td>
+                    <!-- 部门 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">{$deptArr[$list.deptId]}</td>
+                    <!-- 销售 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">{getUserNameById($list.salerId)}</td>
+                    <!-- 备注 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">{$list.preNote}</td> 
+                    <td rowspan="{$ridArr[$list.shareId]}">{$list.site}</td> 
+                    <!-- 导入人 -->
+                    <td rowspan="{$ridArr[$list.shareId]}">
+                        {if $list.adduserId == 10015}
+                            系统
+                        {else}
+                            {getUserNameById($list.adduserId)}
+                        {/if}
+                    </td>
+                    {/if}
+                    <!-- 采购跟单 -->
+                    <td>{getUserNameById($list.purchaseuserId)}</td>
+                    <!-- 供应商 -->
+                   	<td>
+                        {if $searchSupplier == 1 && in_array($list.purchaseuserId,$accessIds)}
+                            {if $list.partnerId ==61089 || $list.partnerId == 37476}
+                                <a href="javascript:void(0)" onclick="showTaskInfo('{$list.rid}');">{$list.partnerName}</a>
+                            {else}
+                                {$list.partnerName}
+                            {/if}
+                        {else}
+                            --
+                        {/if}
+                        {if $list.partnerId ==61089 || $list.partnerId == 37476}
+                            <br/>
+                            {if $list.pushStatus == 2}(已推送)
+                            {elseif $list.pushStatus == 3}(已拒绝)
+                            {else}(未推送){/if}
+                        {/if}
+                    </td> 
+                   	<td>
+                        {if $isPur == 1}
+                            <input type="checkbox" id="inverse-check-detail" name="inverse-detail" value="{$list.rid}" data-lockstatus="{$list.lockStatus}" data-status="{$list.status}" data-shareId="{$list.shareId}"  data-parid="{$list.partnerId}" data-pushstatus="{$list.pushStatus}">
+                        {else}
+                            
+                        {/if}
+                    </td>
+                    <!-- 分摊数量 -->
+                    <td>{$list.shareCount}</td>
+                    <!-- 预备货单号 -->
+                    <td>{$list.preNumber}</td>
+                    <!-- 实际备货数量 -->
+                    <td class="ratebtn" data-count="{$list.acturalPreCount}" data-rid="{$list.rid}" data-rate="{$list.processRate}" data-scount="{$list.spotCount}">
+                        <a href="javascript:;" class="showLog">{$list.acturalPreCount}</a>
+                    {if $list.is_finish == 1}<br /><font style="color:red; font-weight: bolder; font-size: 12px;">已完结</font>
+                    {/if}
+                    </td>
+                    <!-- 现货数量 -->
+                    <td>
+                        {$list.spotCount}  
+                    </td>
+                    <!-- 处理状态 -->
+                    <td>{$stuArr[$list.status]}</td>
+                    <!-- 处理时间 -->
+                    <td>
+						{if $list.createTime != 0}
+                            {$list.createTime|date_format:'%Y-%m-%d'}<br/>
+                            {$list.createTime|date_format:'%H:%M:%S'}
+                        {/if}
+                    </td>
+                    <!-- 预计到货时间 -->
+                    <td class="surbtn" data-rid="{$list.rid}">
+						{if $list.forcastArrTime != 0}
+                            {$list.forcastArrTime|date_format:'%Y-%m-%d'}<br/>
+                            {$list.forcastArrTime|date_format:'%H:%M:%S'}
+                        {/if}
+                    </td>
+                    <!-- 生产进度 -->
+                    <td>{$list.processRate}</td>
+                    <!-- 实际在单时间 -->
+                    <td class="surbtn" data-rid="{$list.rid}">
+						{if $list.acturalTime != 0}
+                            {$list.acturalTime|date_format:'%Y-%m-%d'}<br/>
+                            {$list.acturalTime|date_format:'%H:%M:%S'}
+                        {/if}
+                    </td> 
+                    <!-- 实际下单数量 -->
+                    <td class="surbtn" data-rid="{$list.rid}">{$list.acturalCount}</td>
+                    <!-- 采购单号 -->
+                    <td class="surbtn" data-rid="{$list.rid}">
+                        <a href="javascript:;" class="showLog">{$list.ordersn}</a>
+                    </td>
+                    <!-- 现货结余数量 -->
+                    <td>{$list.surspotCout}</td>
+                    <!-- 总结余数量 -->
+                    <td>{$list.surCount}</td>
+                    <!-- 延迟天数 -->
+                    <td class="surbtn" data-rid="{$list.rid}">{$list.delayDay}</td>
+                    <!-- 预备货单状态 -->
+                    <td>{$dalayArr[$list.preStatus]}</td>
+                    {if $tempId != $list.shareId} 
+                    <td rowspan="{$ridArr[$list.shareId]}"><a href="javascript:;" class="showLog" data-rid="{$list.rid}" onclick="getLog({$list.rid})">操作日志</a></td>
+                    {/if}   
+           		</tr>
+                {$tempId = $list.shareId}
+           {/foreach}
+           {/if}
+        </tbody>
+    </table>
+</div>
+<div class="bottomvar">
+    <div class="pagination">{$pageStr}</div> 
+</div>
+{include file="../footer.htm"}
+<!-- 导入预备货需求弹框 Start-->
+<div id="importPrepareLayer" class="modal fade" tabindex="-1" data-width="600" data-height="200" data-backdrop="true" style="display: none;">
+    <form id="import-sku-prepare-form" name="import-sku-form">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title" style="font-weight:bolder">导入预备货需求</h4>
+        </div>
+         <div class="modal-body">
+            <div class="row">
+                <div class="col-md-12">
+                  请按照模板填写数据后导入，点击此处<a href="../modelFile/prepareOrderModel.xlsx" target="_blank">下载模板</a>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-9">
+                    <input name="upfile" type="file"/>
+                </div>
+                <div class="col-md-3"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-12" id="import-prepare-error-show"></div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <p id="import-prepare-success"></p>
+                </div>
+            </div>
+       </div>
+       <div class="modal-footer">
+            <button type="button" data-dismiss="modal" class="btn btn-default" id="cycle-day-close">Close</button>
+            <input id="submit" name="submit" type="submit" class="btn btn-primary" value="提交"/>
+       </div>
+   </form>
+</div>
+<!-- 导入预备货需求 End-->
+
+<!-- 销售编辑预备货数量 Start-->
+<div id="editsaleLayer" class="modal fade" tabindex="-1" data-width="500" data-height="250" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">编辑备货记录</h4>
+    </div>
+    <div class="modal-body">
+         <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">销售:</label>
+                <div class="col-sm-8"> 
+                    <input type="text" name="saler" id="saler" value="" style="width:120px" class="form-control">
+                </div>
+            </div>
+        </div>
+        <br/>
+        <br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">需求备货量:</label>
+                <div class="col-sm-8"> 
+                    <input type="text" name="salePreCount" id="salePreCount" value="" style="width:120px" class="form-control">
+                </div>
+            </div>
+        </div>
+        <br/>
+        <br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">预计下单时间:</label>
+                <div class="col-sm-8"> 
+                    <input id="salePreTime"  onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" placeholder="选择时间" class="form-control" />
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitEditsaleLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 销售编辑预备货数量 End-->
+
+<!-- 备货详情信息 Start--> 
+<div id="surBtnLayer" class="modal fade" tabindex="-1" data-width="1200" data-height="350" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">备货信息录入</h4>
+    </div>
+    <div class="modal-body">
+        <div id="preDetailInfo">
+		
+		</div>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="preDetailsubmit" class="btn btn-primary" value="保存"/>
+        <button type="button" class="btn btn-danger" id="preDetailimport-del">删除备货信息</button>
+        <button type="button" class="btn btn-primary" id="preDetailimport-add">增加备货信息录入</button>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 备货详情信息 End-->
+
+<!-- 销售编辑预备货数量 Start-->
+<!-- <div id="createPreNumLayer" class="modal fade" tabindex="-1" data-width="500" data-height="200" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">编辑</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">预计回货时间:</label>
+                <div class="col-sm-8"> 
+                    <input id="salePreTime"  onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" placeholder="选择时间" class="form-control" />
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitcreatePreNum" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> -->
+<!-- 销售编辑预备货数量 End-->
+
+<!-- 日志 Start--> 
+<div id="logLayer" class="modal fade" tabindex="-1" data-width="350" data-height="350" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">日志</h4>
+    </div>
+    <div class="modal-body">
+        <div id="logData">
+        
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 日志 End-->
+
+<!-- 分摊预备货计划 Start-->
+<div id="sharePreLayer" class="modal fade" tabindex="-1" data-width="700" data-height="300" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">分摊</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">跟单:</label>
+                <div class="col-sm-8">
+                    <select id="shareCguser" class="form-control flexselect" style="width:120px">
+                            <option value="-1" selected>请选择跟单</option>
+                            {foreach item=list from=$purchaseList}
+                            <option value="{$list['global_user_id']}">{$list["global_user_name"]}</option>
+                            {/foreach}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">需求备货量:</label>
+                <div class="col-sm-8"> 
+                    <input type="text" name="salePreCount" id="shareNum" value="" style="width:120px" class="form-control">
+                </div>
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">供应商:</label>
+                <div class="col-sm-8 input_partner_perfectInfor-search">
+                    <input type="text" oldVal="" value="" id="input_partner_perfectInfor" class="csearch form-control" placeholder="请输入供应商"/>
+                    <div style="position: relative;height: 0px;scroll-y:yes;">
+                        <input type="hidden" id="input_partner_perfectInfor-values" value="搜索值" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br/> 
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitSharePreLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 分摊预备货计划 End-->
+
+<!-- 批量分摊预备货计划 start-->
+<div id="batchSharePreLayer" class="modal fade" tabindex="-1" data-width="700" data-height="300" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">分摊</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <!-- <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">需求备货量:</label> -->
+                <div class="col-sm-12" id="shareList"> 
+                    <!-- <input type="text" name="salePreCount" id="shareNum" value="" style="width:120px" class="form-control"> -->
+                </div>
+            </div>
+        </div>
+        <br/> 
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">跟单:</label>
+                <div class="col-sm-8">
+                    <select id="batchShareCguser" class="form-control flexselect" style="width:120px">
+                            <option value="-1" selected>请选择跟单</option>
+                            {foreach item=list from=$purchaseList}
+                            <option value="{$list['global_user_id']}">{$list["global_user_name"]}</option>
+                            {/foreach}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">供应商:</label>
+                <div class="col-sm-8 input_partner_perfectInfor2-search">
+                    <input type="text" oldVal="" value="" id="input_partner_perfectInfor2" class="csearch form-control" placeholder="请输入供应商"/>
+                    <div style="position: relative;height: 0px;scroll-y:yes;">
+                        <input type="hidden" id="input_partner_perfectInfor2-values" value="搜索值" />
+                    </div> 
+                </div> 
+            </div>
+        </div>
+        <br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitbatchSharePreLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 批量分摊预备货计划 end-->
+
+<!-- 编辑预备货计划 Start-->
+<div id="editPreLayer" class="modal fade" tabindex="-1" data-width="700" data-height="300" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">更改实际备货数量</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">实际备货数量:</label>
+                <div class="col-sm-8"> 
+                    <input type="text" name="actPrecount" id="actPrecount" value="" style="width:250px" class="form-control">
+                </div>
+            </div>
+        </div><br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">修改实际备货数量备注:</label>
+                <div class="col-sm-8"> 
+                    <textarea name="countNote" id="countNote" value="" style="width:250px" class="form-control"></textarea>
+                </div>
+            </div>
+        </div><br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitEditPreLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 编辑预备货计划 End-->
+
+<!-- 批量维护采购单号 Start-->
+<div id="batchOrderLayer" class="modal fade" tabindex="-1" data-width="500" data-height="200" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">批量维护采购单号</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">采购单号:</label>
+                <div class="col-sm-8" id="batchOrderList">
+                    <input type="text" name="batchOrdersn" value="" style="width:200px;margin:10px 0;" class="form-control">
+                </div>
+            </div>
+        </div>
+        <br/>
+        <br/>
+        
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-danger"  id="batchOrder-delete">删除行</button>
+        <button type="button" class="btn btn-primary" id="batchOrder-add">增加行</button> 
+        <input type="button" id="saveBatchOrderLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 批量维护采购单号 End-->
+
+<!-- 批量维护供应商和跟单 Start--> 
+<div id="batchSupplierPurLayer" class="modal fade" tabindex="-1" data-width="500" data-height="250" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">批量维护供应商和跟单</h4>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">跟单:</label>
+                <div class="col-sm-8">
+                    <select id="changePur" class="form-control flexselect" style="width:120px">
+                            <option value="-1" selected>请选择跟单</option>
+                            {foreach item=list from=$purchaseList}
+                            <option value="{$list['global_user_id']}">{$list["global_user_name"]}</option>
+                            {/foreach}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">供应商:</label>
+                <div class="col-sm-8 input_partner_perfectInfor3-search">
+                    <input type="text" oldVal="" value="" id="input_partner_perfectInfor3" class="csearch form-control" placeholder="请输入供应商"/>
+                    <div style="position: relative;height: 0px;scroll-y:yes;">
+                        <input type="hidden" id="input_partner_perfectInfor3-values" value="搜索值" />
+                    </div> 
+                </div> 
+            </div>
+        </div>
+        <br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitSupplierPur" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 批量维护供应商和跟单 End-->
+
+<!-- 生成预备货单号 Start--> 
+<div id="createOrderLayer" class="modal fade" tabindex="-1" data-width="400" data-height="150" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">生成预备货单号</h4> 
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">预计回货时间:</label>
+                <div class="col-sm-8"> 
+                    <input id="forcastArrTime" style="border:1px solid black;height: 36px;text-align: center;"  placeholder="预计回货时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="" />
+                </div>
+            </div>
+        </div><br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitcreateOrderLayer" class="btn btn-primary" value="生成预备货单号"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 生成预备货单号 End-->
+
+<!-- 完結预备货记录 Start--> 
+<div id="finishOrderLayer" class="modal fade" tabindex="-1" data-width="400" data-height="150" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">完结预备货记录</h4> 
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">完结备注:</label>
+                <div class="col-sm-8">
+                    <input type="text" name="finishNote" id="finishNote" value="" style="width:150px" class="form-control">
+                </div>
+            </div>
+        </div><br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitfinishOrderLayer" class="btn btn-primary" value="确认完结"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 完结预备货记录 End-->
+
+<!-- 废弃预备货记录 Start--> 
+<div id="delOrderLayer" class="modal fade" tabindex="-1" data-width="400" data-height="150" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">废弃预备货记录</h4> 
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">废弃备注:</label>
+                <div class="col-sm-8">
+                    <input type="text" name="delNote" id="delNote" value="" style="width:150px" class="form-control">
+                </div>
+            </div>
+        </div><br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitdelOrderLayer" class="btn btn-primary" value="确认废弃"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 废弃预备货记录 End-->
+
+<!-- 更改备货进度 Start--> 
+<div id="editforcastArrTimeLayer" class="modal fade" tabindex="-1" data-width="600" data-height="250" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">批量更改备货进度</h4> 
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">预计回货时间:</label>
+                <div class="col-sm-8"> 
+                    <input id="editforcastArrTime" style="border:1px solid black;height: 36px;text-align: center;"  placeholder="预计回货时间" onclick="{literal}WdatePicker({dateFmt: 'yyyy-MM-dd'}){/literal}" type="text" value="" />
+                </div>
+            </div>
+        </div><br/>、
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">生产进度:</label>
+                <div class="col-sm-8"> 
+                    <textarea name="proRate" id="proRate" value="" style="width:250px" class="form-control"></textarea>
+                </div>
+            </div>
+        </div><br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submiteditforcastArrTimeLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 更改备货进度 End-->
+
+<!-- 更改现货数量 Start--> 
+<div id="batchEditSpotCountLayer" class="modal fade" tabindex="-1" data-width="600" data-height="250" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">维护现货数量</h4> 
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">现货数量:</label>
+                <div class="col-sm-8"> 
+                    <input type="text" name="spotCount" id="spotCount" value="" style="width:250px" class="form-control">
+                </div>
+            </div>
+        </div><br/>
+        <div class="row">
+            <div class="form-group" >
+                <label for="exampleInputName3" class="col-sm-4 control-label" style="font-size: large;">修改实际备货数量备注:</label>
+                <div class="col-sm-8"> 
+                    <textarea name="spotNote" id="spotNote" value="" style="width:250px" class="form-control"></textarea>
+                </div>
+            </div>
+        </div><br/>
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitbatchEditSpotCountLayer" class="btn btn-primary" value="提交"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div> 
+<!-- 更改现货数量 End-->
+
+<!-- 推送达尔文弹框 Start-->
+<div id="pushLayer" class="modal fade" tabindex="-1" data-width="300" data-height="60" data-backdrop="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">推送确认</h4>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" name="hidIdArr" id="hidIdArr" />
+        是否确认推送达尔文信息到麒麟系统？
+    </div>
+    <div class="modal-footer">
+        <input type="button" id="submitPushKirin" class="btn btn-primary" value="确认"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">取消</button>
+    </div>
+</div> 
+<!-- 推送达尔文弹框 End-->
+<!-- 任务令信息弹框 Start -->
+<div id="taskLayer" class="modal fade" tabindex="-1" data-width="850" data-height="300" data-backdrop="true" style="display: none;">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">达尔文任务令信息</h4>
+    </div>
+    <div class="modal-body" id="showTaskData">
+        
+    </div>
+    <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 任务令信息弹框 End -->
+
+<!-- 跟单数据导出弹窗 Start -->
+<div id="exportcLayer" class="modal fade" tabindex="-1" data-width="500" data-height="300" data-backdrop="true" style="display: none;">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h4 class="relation3-modal-title" style="font-weight:bolder">跟单数据导出</h4>
+    </div>
+    <!-- <div class="modal-body" id="showTaskData">
+        
+    </div> -->
+    <div class="modal-footer">
+        <input type="button" id="exportNormal" class="btn btn-primary" value="正常导出"/>
+        <input type="button" id="exportFuliao" class="btn btn-primary" value="增加辅料字段导出"/>
+        <button type="button" data-dismiss="modal" class="btn btn-default" id="relationclose">关闭</button>
+    </div>
+</div>
+<!-- 跟单数据导出弹窗 End -->
+<script type="text/javascript"> 
+    var objName0 = "input_partner_perfectInfor0";
+    var getworld0 = '{$smarty.get.searSupplier}'; 
+    ajaxgetSupper(objName0,'',getworld0);
+    var objName = "input_partner_perfectInfor";
+    var getworld = "{$smarty.get.input_partner_perfectInfor}";
+    ajaxgetSupper(objName,'',getworld);
+    var objName2 = "input_partner_perfectInfor2";
+    var getworld2 = "{$smarty.get.input_partner_perfectInfor2}";
+    ajaxgetSupper(objName2,'',getworld2);
+    var objName3 = "input_partner_perfectInfor3";
+    var getworld3 = "{$smarty.get.input_partner_perfectInfor3}";
+    ajaxgetSupper(objName3,'',getworld3);
+</script>
+
+{literal}
+<script src="../public/js/jquery.form.js" type="text/javascript"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.deptSlectBox').SumoSelect({ 
+          csvDispCount: 2, 
+          search: true,
+          searchText:'搜索部门',
+          captionFormat: '已选择：{0}(个)', 
+          captionFormatAllSelected: "全选", 
+          okCancelInMulti: true,
+          selectAll: true,
+          selectAlltext: '全选',
+        });
+        $('.purSlectBox').SumoSelect({ 
+          csvDispCount: 2, 
+          search: true,
+          searchText:'搜索跟单',
+          captionFormat: '已选择：{0}(个)', 
+          captionFormatAllSelected: "全选", 
+          okCancelInMulti: true,
+          selectAll: true,
+          selectAlltext: '全选',
+        });
+    })
+$("#inverse-check").click(function(){
+    select_all("inverse-check","input[name='inverse']",0);
+});
+
+$("#inverse-check-detail").click(function(){
+    select_all1("inverse-check-detail","input[name='inverse-detail']");
+});
+
+$("#inverse-check-model").click(function(){
+    select_all("inverse-check-model","input[name='checkModelType']");
+}); 
+//搜索 lufen 2020-08-07
+$("#search-btn").click(function(){
+    var searWord           = $('#searWord').val();
+    var searPreOrderNum    = $('#searPreOrderNum').val();
+    var searStatus         = $('#searStatus').val();
+    var searfinish         = $('#searfinish').val();
+    var searLockStatus     = $('#searLockStatus').val();
+    var searSurcount       = $('#searSurcount').val();
+    var searDeptId         = $('#deptId').val();
+    var searCguserId       = $('#cguserId').val();
+    var searAddUser        = $('#searAddUser').val();
+    var searLockUser       = $('#searLockUser').val();
+    var searSaleUser       = $('#searSaleUser').val();
+    var searSupplier       = $('#input_partner_perfectInfor0').val();
+    var searLocktimeStart  = $("#locktime_start").val();
+    var searLocktimeEnd    = $("#locktime_end").val();
+    var searPretimeStart     = $("#pretime_start").val();
+    var searPretimeEnd       = $("#pretime_end").val();
+    var searPreArrtimeStart  = $("#preArrtime_start").val();
+    var searPreArrtimeEnd    = $("#preArrtime_end").val();
+    var param                = '';
+    if(searWord != ''){
+        param += '&searWord='+searWord;
+    }
+    if(searPreOrderNum != ''){
+        param += '&searPreOrderNum='+searPreOrderNum;
+    }
+    if(searStatus != ''){
+        param += '&searStatus='+searStatus;
+    }
+    if(searfinish != ''){
+        param += '&searfinish='+searfinish;
+    }
+    if(searLockStatus != ''){
+        param += '&searLockStatus='+searLockStatus;
+    }
+    if(searSurcount != ''){
+        param += '&searSurcount='+searSurcount;
+    }
+    if(searDeptId != '-1'){
+        param += '&searDeptId='+searDeptId;
+    }
+    if(searCguserId != '-1'){
+        param += '&searCguserId='+searCguserId;
+    }
+    if(searAddUser != ''){
+        param += '&searAddUser='+searAddUser;
+    }
+    if(searLockUser != ''){
+        param += '&searLockUser='+searLockUser;
+    }
+    if(searSaleUser != ''){
+        param += '&searSaleUser='+searSaleUser;
+    }
+    if(searSupplier != '' && searSupplier !== undefined){
+        param += '&searSupplier='+searSupplier;
+    }
+    if(searLocktimeStart != "" && searLocktimeEnd != ""){
+        if(searLocktimeEnd < searLocktimeStart){
+            alertify.error("锁定日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searLocktimeStart=" + searLocktimeStart + "&searLocktimeEnd=" + searLocktimeEnd;
+    }
+    if(searPretimeStart != "" && searPretimeEnd != ""){
+        if(searPretimeEnd < searPretimeStart){
+            alertify.error("预计下单日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPretimeStart=" + searPretimeStart + "&searPretimeEnd=" + searPretimeEnd;
+    }
+    if(searPreArrtimeStart != "" && searPreArrtimeEnd != ""){
+        if(searPreArrtimeEnd < searPreArrtimeStart){
+            alertify.error("预计回货日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPreArrtimeStart=" + searPreArrtimeStart + "&searPreArrtimeEnd=" + searPreArrtimeEnd;
+    }
+    window.location.href = "index.php?mod=prepareOrder&act=index&isSear=1"+param;
+});
+//获取日志
+function getLog(rid){
+    var rid = rid;
+    var url = "index.php?mod=prepareOrder&act=getPrepareLog";
+     $.post(url,{"rid":rid},function(rtn){
+        if(rtn.errCode == 200){
+            var html = '';
+            $.each(rtn.data,function(i,item){
+                    html += '<div>';
+                    html += '<div><span>操作人：</span>'+item.operUser+'</div>';
+                    html += '<div><span>操作时间：</span>'+item.operTime+'</div>';
+                    html += '<div><span>操作事项：</span>'+item.operNote+'</div>';
+                    html += '<div><span>操作数量：</span>'+item.operCount+'</div>';
+                    html += '</div>';
+                    html += '<hr>'; 
+            });
+            $('#logData').html(html);
+            $('#logLayer').modal();
+        }else{
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+}
+//重置 wangminwei 2018-08-02
+$("#reSet").click(function(){
+    $("#searWord").val('');
+    $("#searStatus").val('-1');
+    $("#searLockStatus").val('-1');
+    $("#deptId").val('-1');
+    $("#cguserId").val('-1');
+    $("#searAddUser").val('');
+    $("#searLockUser").val('');
+    $("#locktime_start").val('');
+    $("#locktime_end").val('');
+    $("#pretime_start").val('');
+    $("#pretime_end").val('');
+    $("#preArrtime_start").val('');
+    $("#preArrtime_end").val('');
+    $("input[name='checkModelType']").attr("checked", false);
+    $("input[name='inverse-check-model']").attr("checked", false);
+});
+$("#exportSalePre").click(function(){
+    var searWord           = $('#searWord').val();
+    var searPreOrderNum    = $('#searPreOrderNum').val();
+    var searfinish         = $('#searfinish').val();
+    var searStatus         = $('#searStatus').val();
+    var searLockStatus     = $('#searLockStatus').val();
+    var searDeptId         = $('#deptId').val();
+    var searCguserId       = $('#cguserId').val();
+    var searAddUser        = $('#searAddUser').val();
+    var searLockUser       = $('#searLockUser').val();
+    var searSaleUser       = $('#searSaleUser').val();
+    var searLocktimeStart  = $("#locktime_start").val();
+    var searLocktimeEnd    = $("#locktime_end").val();
+    var searPretimeStart     = $("#pretime_start").val();
+    var searPretimeEnd       = $("#pretime_end").val();
+    var searPreArrtimeStart  = $("#preArrtime_start").val();
+    var searPreArrtimeEnd    = $("#preArrtime_end").val();
+    var param                = '';
+    if(searWord != ''){
+        param += '&searWord='+searWord;
+    }
+    if(searPreOrderNum != ''){
+        param += '&searPreOrderNum='+searPreOrderNum;
+    }
+    if(searStatus != ''){
+        param += '&searStatus='+searStatus;
+    }
+    if(searfinish != ''){
+        param += '&searfinish='+searfinish;
+    }
+    if(searLockStatus != ''){
+        param += '&searLockStatus='+searLockStatus;
+    }
+    if(searDeptId != '-1'){
+        param += '&searDeptId='+searDeptId;
+    }
+    if(searCguserId != '-1'){
+        param += '&searCguserId='+searCguserId;
+    }
+    if(searAddUser != ''){
+        param += '&searAddUser='+searAddUser;
+    }
+    if(searLockUser != ''){
+        param += '&searLockUser='+searLockUser;
+    }
+    if(searSaleUser != ''){
+        param += '&searSaleUser='+searSaleUser;
+    }
+    if(searLocktimeStart != "" && searLocktimeEnd != ""){
+        if(searLocktimeEnd < searLocktimeStart){
+            alertify.error("锁定日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searLocktimeStart=" + searLocktimeStart + "&searLocktimeEnd=" + searLocktimeEnd;
+    }
+    if(searPretimeStart != "" && searPretimeEnd != ""){
+        if(searPretimeEnd < searPretimeStart){
+            alertify.error("预计下单日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPretimeStart=" + searPretimeStart + "&searPretimeEnd=" + searPretimeEnd;
+    }
+    if(searPreArrtimeStart != "" && searPreArrtimeEnd != ""){
+        if(searPreArrtimeEnd < searPreArrtimeStart){
+            alertify.error("预计回货日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPreArrtimeStart=" + searPreArrtimeStart + "&searPreArrtimeEnd=" + searPreArrtimeEnd;
+    }
+    window.location.href = "json.php?mod=prepareOrder&act=exportSalePre&isSear=1"+param;
+})
+$("#exportPurPre").click(function(){
+    $('#exportcLayer').modal();
+})
+$("#exportNormal").click(function(){
+    var searWord           = $('#searWord').val();
+    var searPreOrderNum    = $('#searPreOrderNum').val();
+    var searfinish         = $('#searfinish').val();
+    var searStatus         = $('#searStatus').val();
+    var searLockStatus     = $('#searLockStatus').val();
+    var searDeptId         = $('#deptId').val();
+    var searCguserId       = $('#cguserId').val();
+    var searAddUser        = $('#searAddUser').val();
+    var searLockUser       = $('#searLockUser').val();
+    var searSaleUser       = $('#searSaleUser').val();
+    var searLocktimeStart  = $("#locktime_start").val();
+    var searLocktimeEnd    = $("#locktime_end").val();
+    var searSupplier       = $('#input_partner_perfectInfor0').val();
+    var searPretimeStart     = $("#pretime_start").val();
+    var searPretimeEnd       = $("#pretime_end").val();
+    var searPreArrtimeStart  = $("#preArrtime_start").val();
+    var searPreArrtimeEnd    = $("#preArrtime_end").val();
+    var param                = '';
+    if(searWord != ''){
+        param += '&searWord='+searWord;
+    }
+    if(searPreOrderNum != ''){
+        param += '&searPreOrderNum='+searPreOrderNum;
+    }
+    if(searStatus != ''){
+        param += '&searStatus='+searStatus;
+    }
+    if(searfinish != ''){
+        param += '&searfinish='+searfinish;
+    }
+    if(searLockStatus != ''){
+        param += '&searLockStatus='+searLockStatus;
+    }
+    if(searDeptId != '-1'){
+        param += '&searDeptId='+searDeptId;
+    }
+    if(searCguserId != '-1'){
+        param += '&searCguserId='+searCguserId;
+    }
+    if(searAddUser != ''){
+        param += '&searAddUser='+searAddUser;
+    }
+    if(searLockUser != ''){
+        param += '&searLockUser='+searLockUser;
+    }
+    if(searSaleUser != ''){
+        param += '&searSaleUser='+searSaleUser;
+    }
+    if(searSupplier != '' && searSupplier !== undefined){
+        param += '&searSupplier='+searSupplier;
+    }
+    if(searLocktimeStart != "" && searLocktimeEnd != ""){
+        if(searLocktimeEnd < searLocktimeStart){
+            alertify.error("锁定日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searLocktimeStart=" + searLocktimeStart + "&searLocktimeEnd=" + searLocktimeEnd;
+    }
+    if(searPretimeStart != "" && searPretimeEnd != ""){
+        if(searPretimeEnd < searPretimeStart){
+            alertify.error("预计下单日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPretimeStart=" + searPretimeStart + "&searPretimeEnd=" + searPretimeEnd;
+    }
+    if(searPreArrtimeStart != "" && searPreArrtimeEnd != ""){
+        if(searPreArrtimeEnd < searPreArrtimeStart){
+            alertify.error("预计回货日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPreArrtimeStart=" + searPreArrtimeStart + "&searPreArrtimeEnd=" + searPreArrtimeEnd;
+    }
+    window.location.href = "json.php?mod=prepareOrder&act=exportSalePre&isSear=1&isNormal=0"+param;
+    $('#exportcLayer').modal('hide');
+})
+$("#exportFuliao").click(function(){
+    var searWord           = $('#searWord').val();
+    var searPreOrderNum    = $('#searPreOrderNum').val();
+    var searfinish         = $('#searfinish').val();
+    var searStatus         = $('#searStatus').val();
+    var searLockStatus     = $('#searLockStatus').val();
+    var searDeptId         = $('#deptId').val();
+    var searCguserId       = $('#cguserId').val();
+    var searAddUser        = $('#searAddUser').val();
+    var searLockUser       = $('#searLockUser').val();
+    var searSaleUser       = $('#searSaleUser').val();
+    var searLocktimeStart  = $("#locktime_start").val();
+    var searLocktimeEnd    = $("#locktime_end").val();
+    var searSupplier       = $('#input_partner_perfectInfor0').val();
+    var searPretimeStart     = $("#pretime_start").val();
+    var searPretimeEnd       = $("#pretime_end").val();
+    var searPreArrtimeStart  = $("#preArrtime_start").val();
+    var searPreArrtimeEnd    = $("#preArrtime_end").val();
+    var param                = '';
+    if(searWord != ''){
+        param += '&searWord='+searWord;
+    }
+    if(searPreOrderNum != ''){
+        param += '&searPreOrderNum='+searPreOrderNum;
+    }
+    if(searStatus != ''){
+        param += '&searStatus='+searStatus;
+    }
+    if(searfinish != ''){
+        param += '&searfinish='+searfinish;
+    }
+    if(searLockStatus != ''){
+        param += '&searLockStatus='+searLockStatus;
+    }
+    if(searDeptId != '-1'){
+        param += '&searDeptId='+searDeptId;
+    }
+    if(searCguserId != '-1'){
+        param += '&searCguserId='+searCguserId;
+    }
+    if(searAddUser != ''){
+        param += '&searAddUser='+searAddUser;
+    }
+    if(searLockUser != ''){
+        param += '&searLockUser='+searLockUser;
+    }
+    if(searSaleUser != ''){
+        param += '&searSaleUser='+searSaleUser;
+    }
+    if(searSupplier != '' && searSupplier !== undefined){
+        param += '&searSupplier='+searSupplier;
+    }
+    if(searLocktimeStart != "" && searLocktimeEnd != ""){
+        if(searLocktimeEnd < searLocktimeStart){
+            alertify.error("锁定日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searLocktimeStart=" + searLocktimeStart + "&searLocktimeEnd=" + searLocktimeEnd;
+    }
+    if(searPretimeStart != "" && searPretimeEnd != ""){
+        if(searPretimeEnd < searPretimeStart){
+            alertify.error("预计下单日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPretimeStart=" + searPretimeStart + "&searPretimeEnd=" + searPretimeEnd;
+    }
+    if(searPreArrtimeStart != "" && searPreArrtimeEnd != ""){
+        if(searPreArrtimeEnd < searPreArrtimeStart){
+            alertify.error("预计回货日期结束时间必须大于等于起始时间");
+            return false;
+        }
+        param += "&searPreArrtimeStart=" + searPreArrtimeStart + "&searPreArrtimeEnd=" + searPreArrtimeEnd;
+    }
+    window.location.href = "json.php?mod=prepareOrder&act=exportSalePre&isSear=1&isNormal=1"+param;
+    $('#exportcLayer').modal('hide');
+})
+
+//导入预备货需求 lufen 2020-08-05
+$('#importRecord').click(function(){
+    $('#submit').attr('disabled',false);
+    $('#import-prepare-success').html('');
+    $('#import-prepare-error').html('');
+    $('#import-prepare-error-show').html("");
+    $('#importPrepareLayer').modal();
+});
+
+
+//提交预备货导入需求 lufen 2020-08-05
+$(document).ready(function(){
+    var validateForm = function() { 
+        $('#submit').attr('disabled',true);
+        $('#import-prepare-error').html("");
+        $('#import-prepare-error-show').html("");
+        $('#import-prepare-success').html("");
+    };
+    var showResponse = function(rtn,status) { 
+        if(rtn.errCode==200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 1000);
+        }else if(rtn.errCode == 1001){
+            $('#submit').attr('disabled',false);
+            alertify.alert(rtn.errMsg);
+        }else{
+            var errFile = rtn.data;
+            $('#submit').attr('disabled',false);
+            $('#import-prepare-error-show').html('<br/><span style="color:red">详细错误信息提示</span>>>请【<a href="javascript:void(0);" onclick="errorshow(\''+errFile+'\')">下载</a>】查看');
+            alertify.error(rtn.errMsg);
+        }
+    };
+    var options={          
+        url:"json.php?mod=prepareOrder&act=importPrepareData&jsonp=1",  
+        dataType:'json', 
+        beforeSubmit:validateForm,
+        success:showResponse,  
+        resetForm:true  
+    };
+    $('#import-sku-prepare-form').ajaxForm(options);          
+});
+//删除明细记录 wangminwei 2018-08-02
+$("#delPrepare").click(function(){
+    $(this).attr("disabled","disabled");
+    var th       = this;
+    var idArr    = $('input[name="inverse"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id = $(item).attr('data-shareId');;
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择需要删除的需求模块记录");
+        return false;
+    }
+    alertify.confirm("确认删除记录嘛?",function(e){
+        if(e){
+            var url = "index.php?mod=prepareOrder&act=deletePrepare";
+             $.post(url,{"idData":idData},function(rtn){
+                if(rtn.errCode == 200){
+                    alertify.success(rtn.errMsg);
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2000);
+                }else{
+                    $(th).removeAttr("disabled");
+                    alertify.error(rtn.errMsg);
+                }
+            },"json");
+        }
+    });
+});
+//锁定备货记录 lufen 2020-08-06
+$("#lockPrepare").click(function(){
+    var th         = this;
+    var idArr      = $('input[name="inverse"]:checked');
+    var searDeptId = $('#deptId').val();
+    var idData     = [];
+    var liarr      = $("#deptmentSelect ul li");
+    var deptNamestr = '';
+    $.each(liarr,function(i,item){
+        var sec = $(item).attr('class')
+        if(sec.indexOf("selected") != -1){
+            deptNamestr += $(item).text()+',';
+        }
+    })
+    $.each(idArr ,function(i,item){
+        var id          = $(item).attr('data-shareId');
+        idData.push(id);
+    });
+    if(idData.length == 0 && searDeptId == undefined){
+        alertify.error("请选择备货需求记录或选择部门");
+        return false;
+    }
+    alertify.confirm("确认锁定"+deptNamestr+"记录嘛?",function(e){
+        if(e){
+            var url = "index.php?mod=prepareOrder&act=lockOrUnLockPrepare";
+            $.post(url,{"idData":idData,"lockType":"lock","deptId":searDeptId},function(rtn){
+                if(rtn.errCode == 200){
+                    alertify.success(rtn.errMsg);
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2000);
+                }else{
+                    alertify.alert(rtn.errMsg);
+                }
+            },"json");
+        }
+    });
+    
+});
+//废弃
+$('#unLockPrepare').click(function(){
+    var th       = this;
+    var idArr    = $('input[name="inverse"]:checked');
+    var searDeptId = $('#deptId').val();
+    var idData   = [];
+    var liarr      = $("#deptmentSelect ul li");
+    var deptNamestr = '';
+    $.each(liarr,function(i,item){
+        var sec = $(item).attr('class')
+        if(sec.indexOf("selected") != -1){
+            deptNamestr += $(item).text()+',';
+        }
+    })
+    $.each(idArr ,function(i,item){
+        var id          = $(item).attr('data-shareId');
+        idData.push(id);
+    });
+    if(idData.length == 0 && searDeptId == undefined){
+        alertify.error("请选择备货需求记录或选择部门");
+        return false;
+    }
+    $('#delOrderLayer').modal();
+    // alertify.confirm("确认废弃"+deptNamestr+"记录嘛?",function(e){
+    //     if(e){
+    //         var url = "index.php?mod=prepareOrder&act=lockOrUnLockPrepare";
+    //         $.post(url,{"idData":idData,"lockType":"unlock","deptId":searDeptId},function(rtn){
+    //             if(rtn.errCode == 200){
+    //                 alertify.success(rtn.errMsg);
+    //                 setTimeout(function () {
+    //                     window.location.reload();
+    //                 }, 2000); 
+    //             }else{
+    //                 $(th).removeAttr("disabled");
+    //                 alertify.error(rtn.errMsg);
+    //             }
+    //         },"json");
+    //     } 
+    // });
+    
+})
+$('#submitdelOrderLayer').click(function(){
+    $(this).attr("disabled","disabled");
+    var th       = this;
+    var idArr    = $('input[name="inverse"]:checked');
+    var searDeptId = $('#deptId').val();
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).attr('data-shareId');
+        idData.push(id);
+    });
+    if(idData.length == 0  && searDeptId == undefined){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    } 
+    var note = $("#delNote").val();
+    var url = "index.php?mod=prepareOrder&act=lockOrUnLockPrepare";
+    $.post(url,{"idData":idData,"lockType":"unlock","note":note,"deptId":searDeptId},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000); 
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$('#editPrepare').click(function(){
+	var idArr    = $('input[name="inverse"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id          = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $('#editsaleLayer').modal();
+}) 
+$('#submitEditsaleLayer').click(function(){
+    $(this).attr("disabled","disabled");
+    var th       = this;
+	var idArr    = $('input[name="inverse"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id          = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择记录");
+        return false;
+    } 
+    var editCount = $.trim($('#salePreCount').val());
+    var editTime  = $.trim($('#salePreTime').val());
+    var editSaler = $.trim($('#saler').val());
+    if(editTime == '' && editCount == '' && editSaler == ''){
+        alertify.error("请至少填写一条内容");
+        return false;
+    }
+    var url = "index.php?mod=prepareOrder&act=editPreareBysale";
+    $.post(url,{"idData":idData,"editCount":editCount,"editTime":editTime,"saler":editSaler},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+//修改数量验证 wangminwei 2018-08-02
+$("#salePreCount").keyup(function(){
+    var editCount = $('#salePreCount').val();
+    var regInt    = /^[0-9]*$/;
+    if(!regInt.test(editCount) || parseInt(editCount) == 0){
+        $("#salePreCount").val('');
+        alertify.error("数量只能为大于0的正整数");
+        $("#salePreCount").focus();
+        return false;
+    }
+})
+$("#revokePreOrder").click(function(){
+    $(this).attr("disabled","disabled");
+    var th         = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    alertify.confirm("确认撤销预备货单嘛?",function(e){
+        if(e){
+            var url = "index.php?mod=prepareOrder&act=revokePreOrder";
+            $.post(url,{"idData":idData},function(rtn){
+                if(rtn.errCode == 200){
+                    alertify.success(rtn.errMsg);
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 2000);
+                }else{
+                    $(th).removeAttr("disabled");
+                    alertify.error(rtn.errMsg);
+                }
+            },"json");  
+        }
+    });
+    
+})
+$("#createPreOrder").click(function(){
+	var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    var isPass   = true;
+    $.each(idArr ,function(i,item){
+        var id      = $(item).val();
+        var parId   = $(this).data('parid');
+        if(parId == 61089 || parId == 37476 ){
+            isPass = false;
+        }
+        idData.push(id);
+    });
+    if(!isPass){
+        alertify.error("达尔文料号不能手动生成预备货单"); 
+        return false;
+    }
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $("#createOrderLayer").modal(); 
+    
+})
+$("#finishPrepareOrder").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $("#finishOrderLayer").modal(); 
+})
+$("#submitcreateOrderLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th       = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    } 
+    var time = $("#forcastArrTime").val();
+    var url  = "index.php?mod=prepareOrder&act=createPreOrder"; 
+    $.post(url,{"idData":idData,"time":time},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#submitfinishOrderLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th       = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    } 
+    var note = $("#finishNote").val();
+    var url  = "index.php?mod=prepareOrder&act=finishPrepareOrder"; 
+    $.post(url,{"idData":idData,"note":note},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+
+$(".ratebtn").click(function(){
+    var count = $(this).attr('data-count');
+    var rid   = $(this).attr('data-rid');
+    var rate  = $(this).attr('data-rate');
+    var spotCount  = $(this).attr('data-scount');
+    $("#actPrecount").val(count);
+    $("#proRate").val(rate);
+    $("#spotCount").val(spotCount);
+    $("#editPreLayer").attr('data-rid',rid);
+    $("#editPreLayer").modal();
+})
+$("#actPrecount").keyup(function(){
+    var actPrecount = $('#actPrecount').val();
+    var regInt    = /^[0-9]*$/;
+    if(!regInt.test(actPrecount) || parseInt(actPrecount) == 0){
+        $("#actPrecount").val('');
+        alertify.error("数量只能为大于0的正整数");
+        $("#actPrecount").focus();
+        return false;
+    }
+})
+$("#spotCount").keyup(function(){
+    var spotCount = $('#spotCount').val();
+    var regInt    = /^[0-9]*$/;
+    if(!regInt.test(spotCount) || parseInt(spotCount) < 0){
+        $("#spotCount").val('');
+        alertify.error("数量只能为大于0的正整数");
+        $("#spotCount").focus();
+        return false;
+    }
+})
+
+$("#submitEditPreLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th          = this;
+    var actPrecount = $("#actPrecount").val();
+    var countNote   = $("#countNote").val();
+    var rid     = $("#editPreLayer").attr('data-rid');
+    var url = "index.php?mod=prepareOrder&act=editProRate"; 
+    $.post(url,{"rid":rid,"actPrecount":actPrecount,"countNote":countNote},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$(".surbtn").click(function(){
+	var rid = $(this).attr('data-rid');  
+	var url = "index.php?mod=prepareOrder&act=getPreDetail";
+    $.post(url,{"rid":rid},function(rtn){
+        if(rtn.errCode == 200){
+        	var html = '';
+            html += '<table class="table" id="preOrdersn"><thead><tr><th><input type="checkbox" id="checkAll" onchange="checkAll(this)" value="1"></th><th>订单号</th><th>实际下单时间</th><th>实际下单数量</th><th>预计回货时间</th><th>下单延迟天数</th><th>备货单状态</th></tr></thead><tbody>';
+           	$.each(rtn.data,function(i,item){
+					html += '<tr>';
+					html += '<td><input type="checkbox" id="detailId_'+item.id+'" name="prechkbox" value="'+item.id+'"/></td>'; 
+					html += '<td><input type="text"  name="ordersn_'+item.id+'" value="'+item.ordersn+'"/></td><td><input name="actTime_'+item.id+'" id="actTime" style="border:1px solid #000;height: 36px;text-align: center;"  placeholder="实际下单时间" onclick="{literal}WdatePicker({dateFmt: \'yyyy-MM-dd\'}){/literal}" type="text" value="'+item.acturalTime+'" disabled="disabled"/></td><td><input type="text"  name="actCount_'+item.id+'" value="'+item.acturalCount+'" disabled="disabled"/></td><td><input name="preTime_'+item.id+'" id="preTime" style="border:1px solid #000;height: 36px;text-align: center;"  placeholder="预计回货时间" onclick="{literal}WdatePicker({dateFmt: \'yyyy-MM-dd\'}){/literal}" type="text" value="'+item.preArriveTime+'" disabled="disabled"/></td><td>'+item.delayDay+'</td><td>'+item.preStatus+'</td>'; 
+					html += '</tr>'; 
+			});
+			html += '</tbody></table>';
+			$('#preDetailInfo').html(html);
+            $("#surBtnLayer").attr('data-rid',rid);
+			$('#surBtnLayer').modal();	
+        }else{
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+//增加备货详情录入
+$("#preDetailimport-add").click(function(){
+	var first_box        = $("#preDetailInfo").find("table:first");
+	var html = '';
+	html += '<tr>'; 
+    html += '<td><input type="checkbox" name="prechkbox" value="0"/></td>';
+    html += '<td><input type="text"  name="ordersn" value=""/></td><td><input name="actTime" style="border:1px solid #000;height: 36px;text-align: center;"  placeholder="实际下单时间" onclick="{literal}WdatePicker(){/literal}" type="text" disabled="disabled"/></td><td><input type="text"  name="actCount" value="0" disabled="disabled"/></td><td><input name="preTime" style="border:1px solid #000;height: 36px;text-align: center;"  placeholder="预计回货时间" onclick="{literal}WdatePicker(){/literal}" type="text" disabled="disabled"/></td>'; 
+    html += '</tr>';
+	$('#preDetailInfo table').append(html);
+ 
+})
+$("#preDetailimport-del").click(function(){
+    var idArr    = $('input[name="prechkbox"]:checked');
+    if(idArr.length > 1){
+        alertify.error("请逐行删除"); 
+        return false;
+    }
+    if(idArr.length == 0){
+        alertify.error("请选择删除行记录"); 
+        return false;
+    }
+    $.each(idArr ,function(i,item){
+        var tr   = $(item).parent().parent();
+        $(tr).remove();
+    }); 
+})
+$("#batchEditforcastArrTime").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $("#editforcastArrTimeLayer").modal();
+})
+$("#submiteditforcastArrTimeLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    var time    = $("#editforcastArrTime").val();
+    var proRate = $("#proRate").val();
+    if (!proRate && !time) {
+        $(th).removeAttr("disabled");
+        alertify.error("请填写数据后再提交");
+        return false;
+    }
+    var url = "index.php?mod=prepareOrder&act=batchEditForcastArrTime";
+    $.post(url,{"idData":idData,"time":time,"proRate":proRate},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#batchEditSpotCount").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $("#batchEditSpotCountLayer").modal();
+})
+$("#submitbatchEditSpotCountLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    var spotCount = $("#spotCount").val();
+    if (!spotCount) {
+        $(th).removeAttr("disabled");
+        alertify.error("数量不能为空");
+        return false;
+    }
+    var spotNote = $("#spotNote").val();
+    if (!spotNote) {
+        $(th).removeAttr("disabled");
+        alertify.error("备注不能为空");
+        return false;
+    }
+    var url = "index.php?mod=prepareOrder&act=batchEditSpotCount";
+    $.post(url,{"idData":idData,"spotCount":spotCount,"spotNote":spotNote},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#spotCount").keyup(function(){
+    var spotCount = $('#spotCount').val();
+    var regInt    = /^[0-9]*$/;
+    if(!regInt.test(spotCount) || parseInt(spotCount) < 0){
+        $("#spotCount").val('');
+        alertify.error("数量只能为大于等于0的正整数");
+        $("#spotCount").focus();
+        return false;
+    }
+})
+$("#preDetailsubmit").click(function(){
+    $(this).attr("disabled","disabled");
+    var th   = this;
+    var rid  = $("#surBtnLayer").attr('data-rid');
+    var tr   = $('#preDetailInfo table tr');
+    var data = [];
+    var index = true;
+    $.each(tr,function(i,tr){
+        if(i != 0){
+            var dataArr = {};
+            var input =  $(tr).find('input');
+
+            var detailId   = input.eq(0).val();
+            var ordersn    = input.eq(1).val();
+            // var acturalTime   = input.eq(2).val();
+            // var acturalCount  = input.eq(3).val();
+            // var preArriveTime = input.eq(4).val();
+            if(detailId == '' || ordersn == ''){
+                index = false;
+                $(th).removeAttr("disabled");
+                alertify.error("表单存在空值");
+                return false;
+            }
+            dataArr.detailId = detailId;
+            dataArr.ordersn = ordersn;
+            // dataArr.acturalTime = acturalTime;
+            // dataArr.acturalCount = acturalCount;
+            // dataArr.preArriveTime = preArriveTime;
+            data.push(dataArr)
+        } 
+    })
+    if(!index){
+        return false; 
+    }
+    var jsonobj = {"data":data};
+    var postdata = JSON.stringify(jsonobj);
+    var url = "index.php?mod=prepareOrder&act=addOrdersn";
+    $.post(url,{"postdata":postdata,"rid":rid},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+    
+
+})
+
+$("#batchOrderData").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $("#batchOrderLayer").modal();
+})
+$("#batchOrder-add").click(function(){
+    var input = '<input type="text" name="batchOrdersn" value="" style="width:200px;margin:10px 0;" class="form-control">'; 
+    $("#batchOrderList").append(input);
+})
+$("#batchOrder-delete").click(function(){
+    var input  = $("#batchOrderList input");
+    if(input.length == 1){
+        alertify.error("至少保留一条记录"); 
+        return false;
+    }
+    $("#batchOrderList input").eq(-1).remove();
+})
+$("#saveBatchOrderLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th   = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+		$(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    var input  = $("#batchOrderList input");
+    var data = [];
+    var index = true;
+    $.each(input,function(i,val){
+            var dataArr = {}; 
+            var ordersn =  $(val).val(); 
+            if(ordersn == ''){
+                index = false;
+                $(th).removeAttr("disabled");
+                alertify.error("表单存在空值");
+                return false;
+            } 
+            dataArr.ordersn = ordersn;
+            data.push(dataArr)
+    })
+    if(!index){
+        return false; 
+    }
+    var jsonobj = {"data":data};
+    var postdata = JSON.stringify(jsonobj);
+    var url = "index.php?mod=prepareOrder&act=batchAddOrdersn";
+    $.post(url,{"postdata":postdata,"idData":idData},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        } 
+    },"json");
+
+})
+$("#sharePrepare").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    var isPass   = true;
+    $.each(idArr ,function(i,item){
+        var id      = $(item).val();
+        var parId   = $(this).data('parid');
+        if(parId == 61089 || parId == 37476){
+            isPass = false;
+        }
+        idData.push(id);
+    });
+    if(!isPass){
+        alertify.error("达尔文料号不能分摊记录"); 
+        return false;
+    }
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    if(idData.length > 1){
+        alertify.error("只能选择一条预备货记录"); 
+        return false;
+    }
+    $('#sharePreLayer').modal(); 
+    
+})
+$("#submitSharePreLayer").click(function(){
+    $(this).attr("disabled","disabled");
+    var th = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    var shareCguser      = $.trim($('#shareCguser').val());//跟单
+    var shareNum         = $.trim($('#shareNum').val());//分摊数量
+    var partner          = $.trim($('#input_partner_perfectInfor').val());//供应商
+    if (!shareCguser || shareCguser =='-1') {
+        $(th).removeAttr("disabled");
+        alertify.error("跟单不能为空");
+        return false;
+    }
+    if (!shareNum || shareNum=='0') {
+        $(th).removeAttr("disabled");
+        alertify.error("数量不能0");
+        return false;
+    }
+    if (!partner || partner=='-1') {
+        $(th).removeAttr("disabled");
+        alertify.error('供应商不能为空');
+        return false;
+    }
+    var url = "index.php?mod=prepareOrder&act=sharePreData";
+    $.post(url,{"idData":idData,"shareCguser":shareCguser,"shareNum":shareNum,"partner":partner},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#batchSharePrepare").click(function(){
+    $(this).attr("disabled","disabled");
+    var th       = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    var isPass   = true;
+    $.each(idArr ,function(i,item){
+        var id      = $(item).val();
+        var parId   = $(this).data('parid');
+        if(parId == 61089 || parId == 37476){
+            isPass = false;
+        }
+        idData.push(id);
+    });
+    if(!isPass){
+        $(th).removeAttr("disabled");
+        alertify.error("达尔文料号不能分摊记录"); 
+        return false;
+    }
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    var url = "index.php?mod=prepareOrder&act=getShareList";
+    $.post(url,{"idData":idData},function(rtn){
+        if(rtn.errCode == 200){
+            var html = ''; 
+            html += '<table class="table" id="preSharelist"><thead><tr><th>SKU</th><th>跟单</th><th>供应商</th><th>可分摊数量</th><th>分摊数量</th></tr></thead><tbody>';
+            $.each(rtn.data,function(i,item){
+                html += '<tr>'; 
+                html += '<td>'+item.sku+'</td><td>'+item.purchaseuser+'</td><td>'+item.partnerName+'</td><td>'+item.shareCount+'</td><td><input type="text" rid="'+item.id+'" shareId="'+item.shareId+'"  name="actCount_'+item.id+'" value="'+item.shareCount+'"/></td></td>'; 
+                html += '</tr>'; 
+
+            })
+            $("#shareList").html(html);
+            $('#batchSharePreLayer').modal(); 
+        }else{
+            $(th).removeAttr("disabled");//
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#submitbatchSharePreLayer").click(function(){
+	$(this).attr("disabled","disabled");
+    var th = this;
+    var shareCguser      = $.trim($('#batchShareCguser').val());//跟单
+    var partner          = $.trim($('#input_partner_perfectInfor2').val());//供应商
+    var data = []; 
+    var tr   = $('#preSharelist tr');
+    index  = true;
+    $.each(tr,function(i,tr){
+        if(i != 0){
+            var dataArr = {};
+            var td      =  $(tr).find('td'); 
+            var input   = td.eq(4).find('input');
+            var rid     = input.attr('rid')
+            var shareid     = input.attr('shareid')
+            var newshareNum = input.val()
+            if(newshareNum == 0){
+                index = false;
+                $(th).removeAttr("disabled");
+                alertify.error("分摊数量为0");
+                return false;
+            } 
+            dataArr.rid = rid;
+            dataArr.shareid = shareid;
+            dataArr.newshareNum = newshareNum;
+            data.push(dataArr)
+        } 
+    })
+    if(!index){
+        return false; 
+    }
+    var jsonobj = {"data":data};
+    var postdata = JSON.stringify(jsonobj);
+    var url = "index.php?mod=prepareOrder&act=batchSharePreData"; 
+    $.post(url,{"postdata":postdata,"shareCguser":shareCguser,"partner":partner},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#batchEditSupplierPur").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $('#batchSupplierPurLayer').modal(); 
+})
+$("#submitSupplierPur").click(function(){
+    $(this).attr("disabled","disabled");
+    var th = this;
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    $.each(idArr ,function(i,item){
+        var id   = $(item).val();
+        idData.push(id);
+    });
+    if(idData.length == 0){
+        $(th).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    var shareCguser      = $.trim($('#changePur').val());//跟单
+    var partner          = $.trim($('#input_partner_perfectInfor3').val());//供应商
+    var url = "index.php?mod=prepareOrder&act=batchEditSupplierPur";
+    $.post(url,{"idData":idData,"shareCguser":shareCguser,"partner":partner},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(th).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+$("#shareNum").keyup(function(){
+    var shareNum = $('#shareNum').val();
+    var regInt    = /^[0-9]*$/;
+    if(!regInt.test(shareNum) || parseInt(shareNum) == 0){
+        $("#shareNum").val('');
+        alertify.error("数量只能为大于0的正整数");
+        $("#shareNum").focus();
+        return false;
+    }
+})
+//下载错误提示报表 lufen 2020-08-05
+function errorshow(fileName){
+    var webUrl = $('#webUrl').val();
+    window.location.href = webUrl+"upload/prepareOrder/"+fileName;
+}
+
+//推送达尔文 wangminwei 2021-03-02
+$("#pushKirin").click(function(){
+    var idArr    = $('input[name="inverse-detail"]:checked');
+    var idData   = [];
+    var isPass   = true;
+    $.each(idArr ,function(i,item){
+        var id          = $(item).val();
+        var parId       = $(item).data('parid');
+        var pushStatus  = $(item).data('pushstatus');//推送状态
+        var lockStatus  = $(item).data('lockstatus');//锁定状态
+        if(parId != 61089 && parId != 37476){
+            alertify.error("请选择供应商为达尔文的料号!"); 
+            isPass = false;
+            return false;
+        }else{
+            if(lockStatus != 1){
+                alertify.error("请选择已锁定的料号!"); 
+                isPass = false;
+                return false;
+            }
+            if(pushStatus == 2){
+                alertify.error("请选择未推送或已拒绝的料号!"); 
+                isPass = false;
+                return false;
+            }
+            idData.push(id);
+        }
+    });
+    if(!isPass){
+        return;
+    }
+    if(idData.length == 0){
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    $('#hidIdArr').val(idData);
+    $('#pushLayer').modal(); 
+})
+
+//提交推送达尔文 wangminwei 2021-03-03
+$("#submitPushKirin").click(function(){
+    //$(this).attr("disabled","disabled");
+    var idArr = $('#hidIdArr').val();
+    if(idArr == ''){
+        $(this).removeAttr("disabled");
+        alertify.error("请选择预备货记录"); 
+        return false;
+    }
+    var url = "index.php?mod=prepareOrder&act=pushPlanToKirin";
+    $.post(url,{"idData":idArr},function(rtn){
+        if(rtn.errCode == 200){
+            alertify.success(rtn.errMsg);
+            setTimeout(function () {
+                window.location.reload();
+            }, 2000);
+        }else{
+            $(this).removeAttr("disabled");
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+})
+
+//任务令信息弹框显示 wangminwei 2021-03-08
+function showTaskInfo(id){
+    var url = "index.php?mod=prepareOrder&act=showTaskInfo";
+    $.post(url,{"id":id},function(rtn){
+        if(rtn.errCode == 200){
+            $('#taskLayer').modal(); 
+            $('#showTaskData').html(rtn.data);
+        }else{
+            alertify.error(rtn.errMsg);
+        }
+    },"json");
+}
+</script>
+{/literal}
